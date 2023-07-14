@@ -18,7 +18,7 @@ class MALCord(GoldyBot.Extension):
     )
     async def anime(self, platter: GoldyBot.GoldPlatter, query: str):
         jikan = AioJikan()
-        search_result = await jikan.search("anime", "one piece", page=1)
+        search_result = await jikan.search("anime", query, page = 1)
         anime: Dict[str, dict|str|list] = search_result["data"][0]
 
         embed = GoldyBot.Embed(
