@@ -3,7 +3,11 @@ from typing import Dict, List, Any
 
 import GoldyBot
 from GoldyBot import SlashOptionAutoComplete, SlashOptionChoice
+
+from devgoldyutils import short_str
 from jikanpy import AioJikan
+
+from .anime import Anime
 
 class MALCord(GoldyBot.Extension):
     def __init__(self):
@@ -24,22 +28,19 @@ class MALCord(GoldyBot.Extension):
         choices = []
 
         for anime in anime_list:
-            title = anime["title"]
-
-            if anime["title_english"] is not None:
-                title = anime["title_english"]
+            anime = Anime(anime)
 
             choices.append(
-                SlashOptionChoice(title, str(anime["mal_id"]))
+                SlashOptionChoice(anime.title, str(anime.data["mal_id"]))
             )
 
         return choices
 
     @GoldyBot.command(
-        description = "Search for anime on 🔷MyAnimeList.",
+        description = "✨ Search for anime on 🔷MyAnimeList.",
         slash_options = {
             "query": SlashOptionAutoComplete(
-                description = "Anime you would like to query.",
+                description = "🌈 Anime you would like to query.",
                 callback = dynamic_anime_query
             )
         }
@@ -49,19 +50,26 @@ class MALCord(GoldyBot.Extension):
         await platter.wait()
 
         if query.isdigit():
-            search_result = await self.jikan.anime(query, page = 1) # Essentially searching by id. (slash options return anime id as their value)
+            search_result = await self.jikan.anime(query, page = 1) # Essentially searching by id. (slash options return anime id as their value instead the title)
         else:
             search_result = await self.jikan.search("anime", query, page = 1)
             search_result = search_result["data"][0]
 
-        anime: Dict[str, Any] = search_result["data"]
+        anime = Anime(search_result["data"])
+
+        #cover_image = anime["images"]["jpg"]["large_image_url"]
+
+        trailer_image = None
+
+        if anime.data.get("trailer") is not None:
+            trailer_image = anime.data["trailer"]["images"]["maximum_image_url"]
 
         embed = GoldyBot.Embed(
-            title = f"⛩️ {anime['title_english']}",
-            description = anime["background"],
-            url = anime["url"],
+            title = f"⛩️ {anime.title}",
+            description = short_str(anime.description, 334) + f"\n[[Read More]]({anime.url})",
+            url = anime.url,
             image = GoldyBot.EmbedImage(
-                url = anime["images"]["jpg"]["large_image_url"]
+                url = trailer_image
             )
         )
 
