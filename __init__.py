@@ -69,7 +69,7 @@ class MALCord(GoldyBot.Extension):
             description = short_str(anime.description, 334) + f"\n[[Read More]]({anime.url})",
             url = anime.url,
             image = GoldyBot.EmbedImage(
-                url = trailer_image
+                url = trailer_image # TODO: Use pillow to generated an image collage for embed image.
             )
         )
 
