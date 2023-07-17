@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Dict, Any
 from dataclasses import dataclass, field
 
+from PIL.Image import Image
+
 @dataclass
 class Anime:
     data: Dict[str, Any] = field(repr=False)
@@ -22,3 +24,7 @@ class Anime:
 
         if self.description is None:
             self.description = self.synopsis
+
+    def generate_banner(self) -> Image:
+        """Generates the banner for this anime, returns Pillow Image object."""
+        ...

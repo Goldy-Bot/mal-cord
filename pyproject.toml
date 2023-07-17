@@ -13,7 +13,9 @@ keywords = [
 dependencies = [
     "requests",
     "importlib-metadata; python_version<'3.8'",
-    "jikanpy-v4"
+
+    "jikanpy-v4",
+    "Pillow"
 ]
 version = "1.0"
 
