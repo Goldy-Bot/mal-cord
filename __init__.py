@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 import GoldyBot
 from GoldyBot import SlashOptionAutoComplete, SlashOptionChoice
 from io import BytesIO
-
+from datetime import datetime
 from devgoldyutils import short_str
 from jikanpy import AioJikan
 
@@ -20,7 +20,7 @@ class MALCord(GoldyBot.Extension):
         search_results: Dict[str, Any] = None
 
         if typing_value in ["", " "]: # If typing value is empty return top anime series.
-            search_results = await self.jikan.top("anime", page = 1)
+            search_results = await self.jikan.top("anime", page = 1) # I'm worried this might cause use to be rate limited by the api. (We should add some sort of caching.)
         else:
             search_results = await self.jikan.search("anime", typing_value, page = 1)
 
@@ -69,7 +69,41 @@ class MALCord(GoldyBot.Extension):
             url = anime.url,
             image = GoldyBot.EmbedImage(
                 url = banner_file.attachment_url
-            )
+            ),
+            fields = [
+                GoldyBot.EmbedField(
+                    "ℹ️ Info:", 
+                    f"**- 📺 Type: ``{anime.type}``\n" \
+                    f"- 🇬🇧 English: ``{short_str(anime.english_title, 50)}``**", 
+                    inline = True
+                ),
+                GoldyBot.EmbedField(
+                    "📈 Stats:", 
+                    f"**- 🏆 Rank: ``#{anime.rank}``\n" \
+                    f"- 🍿 Popularity: ``#{anime.popularity}``\n" \
+                    f"- ⭐ Stars: ``{anime.stars}``**",
+                    inline = True
+                ),
+                GoldyBot.EmbedField(
+                    "✈️ Airing Status:", 
+                    f"**- 🟢 Status: ``{anime.status}``\n" \
+                    "- ⏰ Started: {aired_started}\n" \
+                    "- 🏁 Ended: {aired_ended}**"
+                )
+            ]
+        )
+
+        airing_start = anime.aired.get("from")
+        if airing_start is not None:
+            airing_start = datetime.strptime(anime.aired.get("from")[:-6], "%Y-%m-%dT%H:%M:%S") # 2008-04-06T00:00:00+00:00
+
+        airing_end = anime.aired.get("to")
+        if airing_end is not None:
+            airing_end = datetime.strptime(anime.aired.get("to")[:-6], "%Y-%m-%dT%H:%M:%S")
+
+        embed.format_fields(
+            aired_started = f"<t:{int(airing_start.timestamp())}:D>" if airing_start is not None else "``None``", 
+            aired_ended = f"<t:{int(airing_end.timestamp())}:D>" if airing_end is not None else "``None``"
         )
 
         await platter.send_message(embeds = [embed], files = [banner_file])

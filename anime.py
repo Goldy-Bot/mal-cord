@@ -11,16 +11,30 @@ class Anime:
     data: Dict[str, Any] = field(repr=False)
 
     title: str = field(init=False)
+    english_title: str = field(init=False)
     synopsis: str = field(init=False)
     background: str = field(init=False)
     description: str = field(init=False)
+    type: str = field(init=False)
+    status: str = field(init=False)
+    aired: dict = field(init=False)
     url: str = field(init=False)
+    rank: int = field(init=False)
+    popularity: int = field(init=False)
+    stars: int = field(init=False)
 
     def __post_init__(self):
         self.title = self.data.get("title")
+        self.english_title = self.data.get("title_english")
         self.synopsis = self.data.get("synopsis")
         self.background = self.data.get("background")
+        self.type = self.data.get("type")
+        self.status = self.data.get("status")
+        self.aired = self.data.get("aired")
         self.url = self.data.get("url")
+        self.rank = self.data.get("rank")
+        self.popularity = self.data.get("popularity")
+        self.stars = self.data.get("score")
 
         self.description = self.background
 
@@ -64,7 +78,7 @@ class Anime:
 
             banner.paste(thumbnail, (cover_image.width, -15))
 
-        banner = add_corners(banner, 30) # Gives the image curvy edges.
+        banner = add_corners(banner, 40) # Gives the image curvy edges.
 
         return banner
 
