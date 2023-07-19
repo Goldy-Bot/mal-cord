@@ -3,6 +3,7 @@ from typing import Dict, List, Any
 
 import GoldyBot
 from GoldyBot import SlashOptionAutoComplete, SlashOptionChoice
+from io import BytesIO
 
 from devgoldyutils import short_str
 from jikanpy import AioJikan
@@ -56,24 +57,22 @@ class MALCord(GoldyBot.Extension):
             search_result = search_result["data"][0]
 
         anime = Anime(search_result["data"])
+        banner = await anime.generate_banner()
 
-        #cover_image = anime["images"]["jpg"]["large_image_url"]
-
-        trailer_image = None
-
-        if anime.data.get("trailer") is not None:
-            trailer_image = anime.data["trailer"]["images"]["maximum_image_url"]
+        memory_buff = BytesIO()
+        banner.save(memory_buff, format="png")
+        banner_file = GoldyBot.File(memory_buff, "image.png")
 
         embed = GoldyBot.Embed(
             title = f"⛩️ {anime.title}",
             description = short_str(anime.description, 334) + f"\n[[Read More]]({anime.url})",
             url = anime.url,
             image = GoldyBot.EmbedImage(
-                url = trailer_image # TODO: Use pillow to generated an image collage for embed image.
+                url = banner_file.attachment_url
             )
         )
 
-        await platter.send_message(embeds = [embed])
+        await platter.send_message(embeds = [embed], files = [banner_file])
 
 
 load = lambda: MALCord()
