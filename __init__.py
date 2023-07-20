@@ -74,7 +74,7 @@ class MALCord(GoldyBot.Extension):
                 GoldyBot.EmbedField(
                     "ℹ️ Info:", 
                     f"**- 📺 Type: ``{anime.type}``\n" \
-                    f"- 🇬🇧 English: ``{short_str(anime.english_title, 50)}``**", 
+                    f"- 🇬🇧 English: ``{short_str(anime.english_title, 50) if anime.english_title is not None else 'None'}``**", 
                     inline = True
                 ),
                 GoldyBot.EmbedField(
