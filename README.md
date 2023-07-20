@@ -10,5 +10,10 @@
 
 </div>
 
+### ✨ Features:
+
+- #### Clean Embed Design
+    <img src="./assets/embed_1.png" width="500px">
+
 
 > ⚠️ This extension is currently a work in progress.
