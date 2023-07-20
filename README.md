@@ -10,10 +10,10 @@
 
 </div>
 
-### ✨ Features:
-
-- #### Clean Embed Design
-    <img src="./assets/embed_1.png" width="500px">
-
-
 > ⚠️ This extension is currently a work in progress.
+
+## ✨ Modern Embeds
+<img src="./assets/embed_1.png" width="500px">
+
+## 🔍 Auto Complete Queries
+<img src="./assets/auto_complete_1.png" width="500px">
