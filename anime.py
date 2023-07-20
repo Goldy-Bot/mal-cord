@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any
+from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
 from io import BytesIO
@@ -12,6 +12,7 @@ class Anime:
 
     title: str = field(init=False)
     english_title: str = field(init=False)
+    episodes: int = field(init=False)
     synopsis: str = field(init=False)
     background: str = field(init=False)
     description: str = field(init=False)
@@ -22,10 +23,13 @@ class Anime:
     rank: int = field(init=False)
     popularity: int = field(init=False)
     stars: int = field(init=False)
+    genres: List[dict] = field(init=False)
+    studios: List[dict] = field(init=False)
 
     def __post_init__(self):
         self.title = self.data.get("title")
         self.english_title = self.data.get("title_english")
+        self.episodes = self.data.get("episodes")
         self.synopsis = self.data.get("synopsis")
         self.background = self.data.get("background")
         self.type = self.data.get("type")
@@ -35,6 +39,8 @@ class Anime:
         self.rank = self.data.get("rank")
         self.popularity = self.data.get("popularity")
         self.stars = self.data.get("score")
+        self.genres = self.data.get("genres")
+        self.studios = self.data.get("studios")
 
         self.description = self.background
 
