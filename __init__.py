@@ -67,7 +67,7 @@ class MALCord(GoldyBot.Extension):
 
             try:
                 search_result = search_result["data"][0]
-            except:
+            except IndexError:
                 raise AnimeNotFound(platter, query, self.logger)
 
         anime = Anime(search_result)
