@@ -11,8 +11,7 @@ keywords = [
     "anime", "myanimelist", "mal"
 ]
 dependencies = [
-    "requests",
-    "importlib-metadata; python_version<'3.8'",
+    "GoldyBot>=5.0dev7",
 
     "jikanpy-v4",
     "Pillow"

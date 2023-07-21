@@ -3,3 +3,5 @@ venv
 test.py
 __pycache__
 .ruff_cache
+mal_cord.egg-info
+build
