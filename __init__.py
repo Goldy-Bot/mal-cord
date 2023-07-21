@@ -5,7 +5,7 @@ import GoldyBot
 from GoldyBot import SlashOptionAutoComplete, SlashOptionChoice
 from io import BytesIO
 from datetime import datetime
-from devgoldyutils import short_str, pprint
+from devgoldyutils import short_str
 from jikanpy import AioJikan
 
 from .anime import Anime
