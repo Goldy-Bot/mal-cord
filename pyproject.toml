@@ -24,8 +24,8 @@ dev = [
 ]
 
 [project.urls]
-GitHub = "https://github.com/THEGOLDENPRO"
-BugTracker = "https://github.com/THEGOLDENPRO/.../issues"
+GitHub = "https://github.com/THEGOLDENPRO/mal_cord"
+BugTracker = "https://github.com/THEGOLDENPRO/mal_cord/issues"
 
 
 
