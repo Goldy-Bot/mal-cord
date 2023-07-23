@@ -15,7 +15,7 @@
 ## ✨ Modern Embeds
 | ✈️ Take On Me | 🔪 Erased | 🏝️ One Piece |
 | --- | --- | --- |
-| <img src="./assets/embed_1.png" width="415px"> | <img src="./assets/embed_2.png" width="425px"> | <img src="./assets/embed_3.png" width="460px"> |
+| <img src="./assets/embed_1.png" width="425px"> | <img src="./assets/embed_2.png" width="438px"> | <img src="./assets/embed_3.png" width="478px"> |
 
 ## 🔍 Auto Complete Queries
 <img src="./assets/auto_complete_1.png" width="600px">
