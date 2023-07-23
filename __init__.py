@@ -101,7 +101,7 @@ class MALCord(GoldyBot.Extension):
                     inline = True
                 ),
                 GoldyBot.EmbedField(
-                    "📈 Stats:", 
+                    "📈 Rating:", 
                     "**- 🏆 Rank: ``{rank}``\n" \
                     "- 🍿 Popularity: ``{popularity}``\n" \
                     "- ⭐ Stars: ``{stars}``**",
@@ -119,8 +119,8 @@ class MALCord(GoldyBot.Extension):
             airing_end = datetime.strptime(anime.aired.get("to")[:-6], "%Y-%m-%dT%H:%M:%S")
 
         embed.format_fields(
-            studio = anime.studios[0]["name"] if anime.studios is not None else "None",
-            studio_link = anime.studios[0]["url"] if anime.studios is not None else "",
+            studio = anime.studios[0]["name"] if not anime.studios == [] else "None",
+            studio_link = anime.studios[0]["url"] if not anime.studios == [] else anime.url,
             genres = " | ".join([genre["name"] for genre in anime.genres]),
             rank = f"#{anime.rank}" if anime.rank is not None else "None",
             popularity = f"#{anime.popularity}" if anime.popularity is not None else "None",
