@@ -54,11 +54,10 @@ class MALCord(GoldyBot.Extension):
                 description = "🌈 Anime you would like to query.",
                 callback = dynamic_anime_query
             )
-        }
+        },
+        wait = True
     )
     async def anime(self, platter: GoldyBot.GoldPlatter, query: str):
-        await platter.wait()
-
         if query.isdigit(): # Essentially searching by id. (slash options return anime id as their value instead the title)
             search_result = await self.jikan.anime(query, page = 1)
             search_result = search_result["data"]
