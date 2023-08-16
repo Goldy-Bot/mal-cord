@@ -11,12 +11,12 @@ keywords = [
     "anime", "myanimelist", "mal"
 ]
 dependencies = [
-    "GoldyBot>=5.0dev7",
+    "GoldyBot>=5.0dev9",
 
     "jikanpy-v4",
     "Pillow"
 ]
-version = "1.0.1"
+version = "1.0.5"
 
 [project.optional-dependencies]
 dev = [
