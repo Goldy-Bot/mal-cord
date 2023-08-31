@@ -2,7 +2,10 @@ from __future__ import annotations
 from typing import Dict, List, Any, Literal
 
 import GoldyBot
-from GoldyBot import SlashOptionAutoComplete, SlashOptionChoice
+from GoldyBot import (
+    SlashOptionAutoComplete, SlashOptionChoice, SlashOption, 
+    Button, ButtonStyle
+)
 from io import BytesIO
 from datetime import datetime
 from devgoldyutils import short_str
@@ -53,11 +56,21 @@ class MALCord(GoldyBot.Extension):
             "query": SlashOptionAutoComplete(
                 description = "🌈 Anime you would like to query.",
                 callback = dynamic_anime_query
+            ),
+            "search_type": SlashOption(
+                name = "type",
+                description = "What you would actually like to search, defaults to anime.",
+                choices = [
+                    SlashOptionChoice("anime", 0),
+                    SlashOptionChoice("characters", 1)                    
+                ],
+                required = False
             )
         },
         wait = True
     )
-    async def anime(self, platter: GoldyBot.GoldPlatter, query: str):
+    async def anime(self, platter: GoldyBot.GoldPlatter, query: str, search_type: int = 0):
+
         if query.isdigit(): # Essentially searching by id. (slash options return anime id as their value instead the title)
             search_result = await self.jikan.anime(query, page = 1)
             search_result = search_result["data"]
@@ -69,7 +82,11 @@ class MALCord(GoldyBot.Extension):
             except IndexError:
                 raise AnimeNotFound(platter, query, self.logger)
 
-        anime = Anime(search_result)
+        if search_type == 0:
+            await self.send_anime(platter, Anime(search_result))
+
+
+    async def send_anime(self, platter: GoldyBot.GoldPlatter, anime: Anime) -> None:
         banner = await anime.generate_banner()
 
         memory_buff = BytesIO()
@@ -125,15 +142,32 @@ class MALCord(GoldyBot.Extension):
             popularity = f"#{anime.popularity}" if anime.popularity is not None else "None",
             stars = f"{anime.stars} / 10" if anime.stars is not None else "None",
             status = anime.status,
-            status_icon = self.__get_status_icon(anime.status),
+            status_icon = self.get_status_icon(anime.status),
             aired_started = f"<t:{int(airing_start.timestamp())}:D>" if airing_start is not None else "``None``", 
             aired_ended = f"<t:{int(airing_end.timestamp())}:D>" if airing_end is not None else "``None``"
         )
 
-        await platter.send_message(embeds = [embed], files = [banner_file])
+        recipes = []
+
+        trailer_url = anime.data["trailer"].get("url")
+
+        if trailer_url is not None:
+            recipes.append(
+                Button(
+                    ButtonStyle.BLURPLE, 
+                    label = "Trailer", 
+                    emoji = "📽️", 
+                    callback = lambda x: x.send_message(
+                        f'**[{anime.title} - Trailer]({trailer_url})**', hide = True
+                    ),
+                    author_only = False
+                )
+            )
+
+        await platter.send_message(embeds = [embed], files = [banner_file], recipes = recipes)
 
 
-    def __get_status_icon(self, status: Literal["Not yet aired", "Currently Airing", "Finished Airing"]):
+    def get_status_icon(self, status: Literal["Not yet aired", "Currently Airing", "Finished Airing"]):
         if status == "Not yet aired":
             return "🟤"
         elif status == "Currently Airing":
