@@ -150,10 +150,21 @@ class MALCord(GoldyBot.Extension):
 
         recipes = []
 
-        print(">>", anime.broadcast)
+        broadcast_timezone = anime.broadcast.get("timezone")
+    
+        if broadcast_timezone is not None and not anime.status == "Finished Airing":
+            timezone = pytz.timezone(broadcast_timezone.lower())
+            time = anime.broadcast.get('time').split(":")
 
-        if anime.broadcast.get("timezone") is not None and not anime.status == "Finished Airing":
-            broadcast_datetime = get_datetime(anime.broadcast.get("string").split("at")[1], HumanDatetimeOptions.BOTH, datetime_formats = [" %H:%M (%Z)"])
+            now = datetime.now()
+            broadcast_datetime = datetime(
+                year = now.year,
+                month = now.month,
+                day = now.day,
+                hour = int(time[0]), 
+                minute = int(time[1])
+            )
+            broadcast_datetime = timezone.normalize(timezone.localize(broadcast_datetime, is_dst = True))
 
             recipes.append(
                 Button(
