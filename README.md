@@ -10,9 +10,7 @@
 
 </div>
 
-> #### ⚠️ This extension is currently a work in progress.
-
-> ### 🆕 V1.1 UPDATE: [✈️ When Air?](#✈️-when-air) and [📽️ Trailers!!!](#📽️-trailers)
+> ### 🆕 V1.1 UPDATE: [✈️ When Air?](#%EF%B8%8F-when-air) and [📽️ Trailers!!!](#%EF%B8%8F-trailers)
 
 ## ✨ Modern Embeds
 | ✈️ Take On Me | 🔪 Erased | 🏝️ One Piece |
