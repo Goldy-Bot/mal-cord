@@ -25,6 +25,7 @@ class Anime:
     stars: int = field(init=False)
     genres: List[dict] = field(init=False)
     studios: List[dict] = field(init=False)
+    broadcast: dict = field(init=False)
 
     def __post_init__(self):
         self.title = self.data.get("title")
@@ -41,6 +42,7 @@ class Anime:
         self.stars = self.data.get("score")
         self.genres = self.data.get("genres")
         self.studios = self.data.get("studios")
+        self.broadcast = self.data.get("broadcast")
 
         self.description = self.background
 

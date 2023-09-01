@@ -10,7 +10,9 @@
 
 </div>
 
-> ### ⚠️ This extension is currently a work in progress.
+> #### ⚠️ This extension is currently a work in progress.
+
+> ### 🆕 V1.1 UPDATE: [✈️ When Air?](#✈️-when-air) and [📽️ Trailers!!!](#📽️-trailers)
 
 ## ✨ Modern Embeds
 | ✈️ Take On Me | 🔪 Erased | 🏝️ One Piece |
@@ -19,3 +21,9 @@
 
 ## 🔍 Auto Complete Queries
 <img src="./assets/auto_complete_1.png" width="600px">
+
+## ✈️ When Air?
+<img src="./assets/when_air.png" width="600px">
+
+## 📽️ Trailers!!!
+<img src="./assets/trailers.png" width="400px">

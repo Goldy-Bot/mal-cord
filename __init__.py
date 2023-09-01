@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import Dict, List, Any, Literal
 
+import pytz
 import GoldyBot
 from GoldyBot import (
     SlashOptionAutoComplete, SlashOptionChoice, SlashOption, 
-    Button, ButtonStyle
+    Button, ButtonStyle, get_datetime, HumanDatetimeOptions
 )
 from io import BytesIO
 from datetime import datetime
@@ -149,6 +150,23 @@ class MALCord(GoldyBot.Extension):
 
         recipes = []
 
+        print(">>", anime.broadcast)
+
+        if anime.broadcast.get("timezone") is not None and not anime.status == "Finished Airing":
+            broadcast_datetime = get_datetime(anime.broadcast.get("string").split("at")[1], HumanDatetimeOptions.BOTH, datetime_formats = [" %H:%M (%Z)"])
+
+            recipes.append(
+                Button(
+                    ButtonStyle.GREY, 
+                    label = "When Air?", 
+                    emoji = "✈️", 
+                    callback = lambda x: x.send_message(
+                        f"✈️ Airing on **{anime.broadcast.get('day')}** at **<t:{int(broadcast_datetime.timestamp())}:t>**", hide = True
+                    ),
+                    author_only = False
+                )
+            )
+
         trailer_url = anime.data["trailer"].get("url")
 
         if trailer_url is not None:
@@ -158,7 +176,7 @@ class MALCord(GoldyBot.Extension):
                     label = "Trailer", 
                     emoji = "📽️", 
                     callback = lambda x: x.send_message(
-                        f'**[{anime.title} - Trailer]({trailer_url})**', hide = True
+                        f"**[{anime.title} - Trailer]({trailer_url})**", hide = True
                     ),
                     author_only = False
                 )
