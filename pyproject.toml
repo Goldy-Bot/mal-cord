@@ -11,7 +11,7 @@ keywords = [
     "anime", "myanimelist", "mal"
 ]
 dependencies = [
-    "GoldyBot>=5.0dev9",
+    "GoldyBot>=5.0dev10",
 
     "jikanpy-v4",
     "Pillow"

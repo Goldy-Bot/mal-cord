@@ -1,10 +1,14 @@
 from __future__ import annotations
-from typing import Dict, Any, List
-from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from typing import Dict, Any, List, Tuple
+
+from . import utils
+from PIL import Image
 from io import BytesIO
-from PIL import Image, ImageDraw
 from GoldyBot import get_goldy_instance
+from dataclasses import dataclass, field
 
 @dataclass
 class Anime:
@@ -26,6 +30,7 @@ class Anime:
     genres: List[dict] = field(init=False)
     studios: List[dict] = field(init=False)
     broadcast: dict = field(init=False)
+    broadcast_time: Tuple[int, int] | None = field(init=False)
 
     def __post_init__(self):
         self.title = self.data.get("title")
@@ -45,6 +50,7 @@ class Anime:
         self.broadcast = self.data.get("broadcast")
 
         self.description = self.background
+        self.broadcast_time = self.broadcast.get("time").split(":") if self.broadcast.get("time") is not None else None
 
         if self.description is None:
             self.description = self.synopsis
@@ -86,21 +92,4 @@ class Anime:
 
             banner.paste(thumbnail, (cover_image.width, -15))
 
-        banner = add_corners(banner, 40) # Gives the image curvy edges.
-
-        return banner
-
-
-def add_corners(image: Image.Image, radius: int) -> Image.Image:
-    # Totally not stolen from https://stackoverflow.com/questions/11287402/how-to-round-corner-a-logo-without-white-backgroundtransparent-on-it-using-pi
-    circle = Image.new("L", (radius * 2, radius * 2), 0)
-    draw = ImageDraw.Draw(circle)
-    draw.ellipse((0, 0, radius * 2 - 1, radius * 2 - 1), fill = 255)
-    alpha = Image.new("L", image.size, 255)
-    w, h = image.size
-    alpha.paste(circle.crop((0, 0, radius, radius)), (0, 0))
-    alpha.paste(circle.crop((0, radius, radius, radius * 2)), (0, h - radius))
-    alpha.paste(circle.crop((radius, 0, radius * 2, radius)), (w - radius, 0))
-    alpha.paste(circle.crop((radius, radius, radius * 2, radius * 2)), (w - radius, h - radius))
-    image.putalpha(alpha)
-    return image
+        return utils.add_corners(banner, 40) # Gives the image curvy edges.
