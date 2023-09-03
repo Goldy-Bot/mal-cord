@@ -66,17 +66,25 @@ class MALCord(GoldyBot.Extension):
 
             if search_type == SearchTypes.ANIME:
                 name = search_result["title"]
-            elif search_type == SearchTypes.CHARACTERS:
-                name = search_result["name"]
 
-                if not search_result["nicknames"] == []:
-                    name += f" ~ {search_result['nicknames'][0]}"
+            elif search_type == SearchTypes.CHARACTERS:
+
+                character = Character(search_result)
+                name = character.name
+
+                if not character.nicknames == []:
+                    name += f" ~ {character.nicknames[0]}"
+
+                elif character.about is not None:
+                    text = character.about.replace("\n", " ")
+                    name += f' ~ "{short_str(text, 56)}"'
 
             choices.append(
                 SlashOptionChoice(name, str(search_result["mal_id"]))
             )
 
         return choices
+
 
     @GoldyBot.command(
         description = "✨ Search for anime on 🔷MyAnimeList.",
