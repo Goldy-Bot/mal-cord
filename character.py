@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Dict, Any, List
 
-from . import utils
 from PIL import Image
 from io import BytesIO
 from GoldyBot import get_goldy_instance

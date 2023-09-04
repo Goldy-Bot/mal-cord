@@ -5,12 +5,12 @@ import pytz
 import GoldyBot
 from GoldyBot import (
     SlashOptionAutoComplete, SlashOptionChoice, SlashOption, 
-    Button, ButtonStyle
+    Button, ButtonStyle, SelectMenu, SelectMenuChoice
 )
 from enum import Enum
 from io import BytesIO
 from datetime import datetime
-from devgoldyutils import short_str, debug
+from devgoldyutils import short_str
 from jikanpy import AioJikan
 
 from .anime import Anime
@@ -77,7 +77,7 @@ class MALCord(GoldyBot.Extension):
 
                 elif character.about is not None:
                     text = character.about.replace("\n", " ")
-                    name += f' ~ "{short_str(text, 56)}"'
+                    name += f' ~ "{short_str(text, 50)}"'
 
             choices.append(
                 SlashOptionChoice(name, str(search_result["mal_id"]))
@@ -109,28 +109,27 @@ class MALCord(GoldyBot.Extension):
         search_type: SearchTypes = SearchTypes(search_type)
 
         if query.isdigit(): # Essentially searching by id. (slash options return anime id as their value instead the title)
-            if search_type == SearchTypes.ANIME:
-                search_result = await self.jikan.anime(query, page = 1)
-            elif search_type == SearchTypes.CHARACTERS:
-                search_result = await self.jikan.characters(query)
-
-            search_result = search_result["data"]
+            search_id = query
         else:
             search_result = await self.jikan.search(search_type.name.lower(), query, page = 1)
 
             try:
-                search_result = search_result["data"][0]
+                search_id = search_result["data"][0]["mal_id"]
             except IndexError:
                 raise AnimeNotFound(platter, query, search_type, self.logger)
 
 
         if search_type == SearchTypes.ANIME:
-            await self.send_anime(platter, Anime(search_result))
+            await self.send_anime(platter, search_id)
         elif search_type == SearchTypes.CHARACTERS:
-            await self.send_character(platter, Character(search_result))
+            await self.send_character(platter, search_id)
 
 
-    async def send_anime(self, platter: GoldyBot.GoldPlatter, anime: Anime) -> None:
+    async def send_anime(self, platter: GoldyBot.GoldPlatter, search_id: int) -> None:
+        search_result = await self.jikan.anime(search_id, page = 1)
+        characters_result = await self.jikan.anime(search_id, "characters", page = 1)
+        anime = Anime(search_result["data"])
+
         banner = await anime.generate_banner()
 
         memory_buff = BytesIO()
@@ -220,6 +219,32 @@ class MALCord(GoldyBot.Extension):
                 )
             )
 
+        recipes.append(
+            Button(
+                ButtonStyle.BLURPLE, 
+                label = "Characters", 
+                emoji = "🧑", 
+                callback = lambda x: x.send_message(
+                    "**Which 🧑 character would you like to lookup?**",
+                    recipes = [
+                        SelectMenu(
+                            callback = lambda x, value: self.send_character(x, int(value)),
+                            choices = [
+                                SelectMenuChoice(
+                                    label = x["character"]["name"], 
+                                    value = x["character"]["mal_id"],
+                                    description = f"Role: {x['role']} | Favorites: {x['favorites']}"
+                                ) for x in characters_result["data"]
+                            ]
+                        )
+                    ],
+                    hide = True
+                ),
+                author_only = False
+            )
+        )
+
+
         trailer_url = anime.data["trailer"].get("url")
 
         if trailer_url is not None:
@@ -235,11 +260,13 @@ class MALCord(GoldyBot.Extension):
                 )
             )
 
-
         await platter.send_message(embeds = [embed], files = [banner_file], recipes = recipes)
 
 
-    async def send_character(self, platter: GoldyBot.GoldPlatter, character: Character) -> None:
+    async def send_character(self, platter: GoldyBot.GoldPlatter, character_id: int) -> None:
+        search_result = await self.jikan.characters(character_id)
+        character = Character(search_result["data"])
+
         character_image = await character.get_image()
 
         memory_buff = BytesIO()
