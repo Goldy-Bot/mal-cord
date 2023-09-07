@@ -234,7 +234,7 @@ class MALCord(GoldyBot.Extension):
                                     label = x["character"]["name"], 
                                     value = x["character"]["mal_id"],
                                     description = f"Role: {x['role']} | Favorites: {x['favorites']}"
-                                ) for x in characters_result["data"]
+                                ) for x in sorted(characters_result["data"], key = lambda d: d["favorites"], reverse = True) 
                             ]
                         )
                     ],
