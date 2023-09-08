@@ -10,7 +10,7 @@
 
 </div>
 
-> ### 🆕 V1.1 UPDATE: [✈️ When Air?](#%EF%B8%8F-when-air) and [📽️ Trailers!!!](#%EF%B8%8F-trailers)
+> ### 🆕 V1.1 UPDATE: [✈️ When Air?](#%EF%B8%8F-when-air), [📽️ Trailers](#%EF%B8%8F-trailers) and [🧑 Characters](--character-lookup)
 
 ## ✨ Modern Embeds
 | ✈️ Take On Me | 🔪 Erased | 🏝️ One Piece |
@@ -23,5 +23,8 @@
 ## ✈️ When Air?
 <img src="./assets/when_air.png" width="600px">
 
-## 📽️ Trailers!!!
+## 📽️ Trailers!
 <img src="./assets/trailers.png" width="400px">
+
+## 🧑 Character Lookup
+<img src="./assets/character_lookup.png" width="400px">
