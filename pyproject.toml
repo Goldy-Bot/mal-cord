@@ -13,6 +13,7 @@ keywords = [
 dependencies = [
     "GoldyBot>=5.0dev10",
 
+    "pytz",
     "jikanpy-v4",
     "Pillow"
 ]
