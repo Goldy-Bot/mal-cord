@@ -1,5 +1,9 @@
 from __future__ import annotations
-from typing import Dict, List, Any, Literal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict, List, Any, Literal
+    from jikan4snek.client.jikan import JikanResponseFromSearch
 
 import pytz
 import GoldyBot
@@ -10,12 +14,12 @@ from GoldyBot import (
 from enum import Enum
 from io import BytesIO
 from datetime import datetime
+from jikan4snek import Jikan4SNEK
 from devgoldyutils import short_str
-from jikanpy import AioJikan
 
 from .anime import Anime
 from .character import Character
-from .errors import AnimeNotFound
+from .errors import AnimeNotFound, RestrictedSearch
 
 class SearchTypes(Enum):
     ANIME = 0
@@ -27,15 +31,8 @@ class SearchTypes(Enum):
 class MALCord(GoldyBot.Extension):
     def __init__(self):
         super().__init__()
-        # We cache the top anime results displayed on auto complete when the member has not entered any character
-        # as an attempt to save spamming the jikan API. As top anime results very rarely change we hold this cache for an entire day.
 
-        self.__top_results_cache = { # Index 0 = timestamp cache expires, Index 1 = Cached data.
-            0: (0, {}),
-            1: (0, {})
-        }
-
-        self.jikan = AioJikan(session = self.goldy.http_client._session)
+        self.jikan = Jikan4SNEK(debug = False)
 
     async def dynamic_anime_query(self, typing_value: str, search_type: int = 0, **_) -> List[SlashOptionChoice]:
         search_results: Dict[str, Any] = None
@@ -43,19 +40,17 @@ class MALCord(GoldyBot.Extension):
         search_type: SearchTypes = SearchTypes(search_type)
 
         if typing_value in ["", " "]: # If typing value is empty return top anime series.
-            current_timestamp = datetime.now().timestamp()
-            top_result_cache = self.__top_results_cache[search_type.value]
-
-            if current_timestamp > top_result_cache[0]:
-                search_results = await self.jikan.top(search_type.name.lower(), page = 1)
-
-                self.__top_results_cache[search_type.value] = (current_timestamp + 86400, search_results) # Expires in a day.
-                self.logger.info(f"Top anime has been cached! Expires at {datetime.fromtimestamp(current_timestamp + 86400)}")
-            else:
-                search_results = top_result_cache[1]
+            search_api = self.jikan.search("", page = 1)
+            search_results = await self.__get_results(search_api, search_type)
 
         else:
-            search_results = await self.jikan.search(search_type.name.lower(), typing_value, page = 1)
+            search_api = self.jikan.search(typing_value, page = 1)
+            search_results = await self.__get_results(search_api, search_type)
+
+        status = search_results.get("status")
+
+        if status == 500:
+            return [SlashOptionChoice(f"Search Failed: API Error ({status})", str(None))]
 
         search_result_list: List[Dict[str, Any]] = search_results["data"]
 
@@ -110,14 +105,16 @@ class MALCord(GoldyBot.Extension):
 
         if query.isdigit(): # Essentially searching by id. (slash options return anime id as their value instead the title)
             search_id = query
+        elif query == "None":
+            raise RestrictedSearch("uhhh that option is just to notify you that an api error occurred...", platter, self.logger)
         else:
-            search_result = await self.jikan.search(search_type.name.lower(), query, page = 1)
+            jikan_response = await self.jikan.search(query, page = 1)
+            search_result = self.__get_results(jikan_response, search_type)
 
             try:
                 search_id = search_result["data"][0]["mal_id"]
             except IndexError:
                 raise AnimeNotFound(platter, query, search_type, self.logger)
-
 
         if search_type == SearchTypes.ANIME:
             await self.send_anime(platter, search_id)
@@ -126,8 +123,8 @@ class MALCord(GoldyBot.Extension):
 
 
     async def send_anime(self, platter: GoldyBot.GoldPlatter, search_id: int) -> None:
-        search_result = await self.jikan.anime(search_id, page = 1)
-        characters_result = await self.jikan.anime(search_id, "characters", page = 1)
+        search_result = await self.jikan.get(search_id).anime()
+        characters_result = await self.jikan.get(search_id, "characters").anime()
         anime = Anime(search_result["data"])
 
         banner = await anime.generate_banner()
@@ -185,7 +182,7 @@ class MALCord(GoldyBot.Extension):
             popularity = f"#{anime.popularity}" if anime.popularity is not None else "None",
             stars = f"{anime.stars} / 10" if anime.stars is not None else "None",
             status = anime.status,
-            status_icon = self.get_status_icon(anime.status),
+            status_icon = self.__get_status_icon(anime.status),
             aired_started = f"<t:{int(airing_start.timestamp())}:D>" if airing_start is not None else "``None``", 
             aired_ended = f"<t:{int(airing_end.timestamp())}:D>" if airing_end is not None else "``None``"
         )
@@ -228,7 +225,7 @@ class MALCord(GoldyBot.Extension):
                     "**Which 🧑 character would you like to lookup?**",
                     recipes = [
                         SelectMenu(
-                            callback = lambda x, value: self.send_character(x, int(value)),
+                            callback = lambda x, value: self.send_character(x, int(value), True),
                             choices = [
                                 SelectMenuChoice(
                                     label = x["character"]["name"], 
@@ -263,8 +260,9 @@ class MALCord(GoldyBot.Extension):
         await platter.send_message(embeds = [embed], files = [banner_file], recipes = recipes)
 
 
-    async def send_character(self, platter: GoldyBot.GoldPlatter, character_id: int) -> None:
-        search_result = await self.jikan.characters(character_id)
+    async def send_character(self, platter: GoldyBot.GoldPlatter, character_id: int, hide = False) -> None:
+        search_result = await self.jikan.get(character_id).characters()
+        print(">>", search_result["data"])
         character = Character(search_result["data"])
 
         character_image = await character.get_image()
@@ -299,16 +297,26 @@ class MALCord(GoldyBot.Extension):
             nicknames = " | ".join(character.nicknames) if not character.nicknames == [] else "None",
         )
 
-        await platter.send_message(embeds = [embed], files = [character_image_file])
+        await platter.send_message(embeds = [embed], files = [character_image_file], hide = hide)
 
 
-    def get_status_icon(self, status: Literal["Not yet aired", "Currently Airing", "Finished Airing"]):
+    def __get_status_icon(self, status: Literal["Not yet aired", "Currently Airing", "Finished Airing"]):
         if status == "Not yet aired":
             return "🟤"
         elif status == "Currently Airing":
             return "🟠"
         elif status == "Finished Airing":
             return "🟢"
+
+    async def __get_results(self, jikan_response: JikanResponseFromSearch, search_type: SearchTypes) -> Dict[str, Any]:
+        search_results: Dict[str, Any] = None
+
+        if search_type == SearchTypes.ANIME:
+            search_results = await jikan_response.anime()
+        else:
+            search_results = await jikan_response.characters()
+
+        return search_results
 
 
 load = lambda: MALCord()

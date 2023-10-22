@@ -1,12 +1,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from GoldyBot import nextcore_utils, Embed, Colours
+import GoldyBot
+from GoldyBot import nextcore_utils, Embed, Colours, front_end_errors
 
 if TYPE_CHECKING:
     import logging as log
-    from GoldyBot import objects
+    from GoldyBot import objects, GoldPlatter
     from . import SearchTypes
+
+__all__ = ("AnimeNotFound", "RestrictedSearch")
 
 class AnimeNotFound(nextcore_utils.FrontEndErrors):
     """Raises when an anime query fails."""
@@ -25,3 +28,12 @@ class AnimeNotFound(nextcore_utils.FrontEndErrors):
             delete_after = 12,
             logger = logger
         )
+
+class RestrictedSearch(front_end_errors.FrontEndErrors):
+    def __init__(self, message: str, platter: GoldPlatter, logger: log.Logger):
+        embed = GoldyBot.Embed(
+            title = "🧡 You can't search that!",
+            description = message,
+            colour = GoldyBot.Colours.AKI_ORANGE
+        )
+        super().__init__(embed, message, platter, delete_after = 8, logger = logger)

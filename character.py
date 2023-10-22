@@ -9,6 +9,8 @@ from io import BytesIO
 from GoldyBot import get_goldy_instance
 from dataclasses import dataclass, field
 
+__all__ = ("Character",)
+
 @dataclass
 class Character:
     data: Dict[str, Any] = field(repr=False)
