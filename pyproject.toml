@@ -14,10 +14,10 @@ dependencies = [
     "GoldyBot>=5.0dev10",
 
     "pytz",
-    "jikan4snek@git+https://github.com/THEGOLDENPRO/jikan4snek",
+    "anmoku@git+https://github.com/THEGOLDENPRO/anmoku",
     "Pillow"
 ]
-version = "1.1"
+version = "1.2"
 
 [project.optional-dependencies]
 dev = [

@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from jikan4snek.client.jikan import JikanResponseFromSearch
 
 import pytz
+import anmoku
 import GoldyBot
 from GoldyBot import (
     SlashOptionAutoComplete, SlashOptionChoice, SlashOption, 
@@ -14,7 +15,6 @@ from GoldyBot import (
 from enum import Enum
 from io import BytesIO
 from datetime import datetime
-from jikan4snek import Jikan4SNEK
 from devgoldyutils import short_str
 
 from .anime import Anime
@@ -32,7 +32,17 @@ class MALCord(GoldyBot.Extension):
     def __init__(self):
         super().__init__()
 
-        self.jikan = Jikan4SNEK(debug = False)
+        # We cache the top anime results displayed on auto complete when the member has not entered any character
+        # as an attempt to save spamming the jikan API. As top anime results very rarely change we hold this cache for an entire day.
+
+        self.__top_results_cache = { # Index 0 = timestamp cache expires, Index 1 = Cached data.
+            0: (0, {}),
+            1: (0, {})
+        }
+
+        self.anmoku = anmoku.AsyncAnmoku(
+            aiohttp_session = self.goldy.http_client._session
+        )
 
     async def dynamic_anime_query(self, typing_value: str, search_type: int = 0, **_) -> List[SlashOptionChoice]:
         search_results: Dict[str, Any] = None
@@ -40,12 +50,19 @@ class MALCord(GoldyBot.Extension):
         search_type: SearchTypes = SearchTypes(search_type)
 
         if typing_value in ["", " "]: # If typing value is empty return top anime series.
-            search_api = self.jikan.search("", page = 1)
-            search_results = await self.__get_results(search_api, search_type)
+            current_timestamp = datetime.now().timestamp()
+            top_result_cache = self.__top_results_cache[search_type.value]
+
+            if current_timestamp > top_result_cache[0]:
+                search_results = await self.__search("", search_type)
+
+                self.__top_results_cache[search_type.value] = (current_timestamp + 86400, search_results) # Expires in a day.
+                self.logger.info(f"Top anime has been cached! Expires at {datetime.fromtimestamp(current_timestamp + 86400)}")
+            else:
+                search_results = top_result_cache[1]
 
         else:
-            search_api = self.jikan.search(typing_value, page = 1)
-            search_results = await self.__get_results(search_api, search_type)
+            search_results = await self.__search(typing_value, search_type)
 
         status = search_results.get("status")
 
@@ -123,9 +140,9 @@ class MALCord(GoldyBot.Extension):
 
 
     async def send_anime(self, platter: GoldyBot.GoldPlatter, search_id: int) -> None:
-        search_result = await self.jikan.get(search_id).anime()
-        characters_result = await self.jikan.get(search_id, "characters").anime()
-        anime = Anime(search_result["data"])
+        search_result = await self.anmoku.get(anmoku.Anime, id = search_id)
+        characters_result = await self.anmoku.get(anmoku.AnimeCharacters, id = search_id)
+        anime = Anime(search_result.data["data"])
 
         banner = await anime.generate_banner()
 
@@ -231,7 +248,7 @@ class MALCord(GoldyBot.Extension):
                                     label = x["character"]["name"], 
                                     value = x["character"]["mal_id"],
                                     description = f"Role: {x['role']} | Favorites: {x['favorites']}"
-                                ) for x in sorted(characters_result["data"], key = lambda d: d["favorites"], reverse = True) 
+                                ) for x in sorted(characters_result.data["data"], key = lambda d: d["favorites"], reverse = True) 
                             ]
                         )
                     ],
@@ -261,9 +278,8 @@ class MALCord(GoldyBot.Extension):
 
 
     async def send_character(self, platter: GoldyBot.GoldPlatter, character_id: int, hide = False) -> None:
-        search_result = await self.jikan.get(character_id).characters()
-        print(">>", search_result["data"])
-        character = Character(search_result["data"])
+        search_result = await self.anmoku.get(anmoku.Character, id = character_id)
+        character = Character(search_result.data["data"])
 
         character_image = await character.get_image()
 
@@ -308,15 +324,9 @@ class MALCord(GoldyBot.Extension):
         elif status == "Finished Airing":
             return "🟢"
 
-    async def __get_results(self, jikan_response: JikanResponseFromSearch, search_type: SearchTypes) -> Dict[str, Any]:
-        search_results: Dict[str, Any] = None
-
-        if search_type == SearchTypes.ANIME:
-            search_results = await jikan_response.anime()
-        else:
-            search_results = await jikan_response.characters()
-
-        return search_results
-
+    async def __search(self, query: str, search_type: SearchTypes):
+        return await self.anmoku.search(
+            anmoku.Anime if search_type.value == 0 else anmoku.Character, query
+        )
 
 load = lambda: MALCord()
