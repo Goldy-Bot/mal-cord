@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Dict, List, Any, Literal
-    from jikan4snek.client.jikan import JikanResponseFromSearch
 
 import pytz
 import anmoku
