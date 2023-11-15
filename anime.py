@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Dict, Any, List, Tuple
 
-from . import utils
 from PIL import Image
 from io import BytesIO
+from .utils import add_corners
 from GoldyBot import get_goldy_instance
 from dataclasses import dataclass, field
 
@@ -94,4 +94,4 @@ class Anime:
 
             banner.paste(thumbnail, (cover_image.width, -15))
 
-        return utils.add_corners(banner, 40) # Gives the image curvy edges.
+        return add_corners(banner, 40) # Gives the image curvy edges.
