@@ -15,7 +15,7 @@ dependencies = [
 
     "pytz",
     "anmoku@git+https://github.com/THEGOLDENPRO/anmoku",
-    "Pillow"
+    "Pillow>=9.5.0"
 ]
 version = "1.2"
 
