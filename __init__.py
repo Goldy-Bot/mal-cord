@@ -2,14 +2,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Any, Literal
+    from typing import List, Literal
+
+    from anmoku.resources.helpers import SearchResult
 
 import pytz
 import anmoku
 import GoldyBot
 from GoldyBot import (
     SlashOptionAutoComplete, SlashOptionChoice, SlashOption, 
-    Button, ButtonStyle, SelectMenu, SelectMenuChoice
+    Button, ButtonStyle, SelectMenu, SelectMenuChoice, goldy_bot_logger
 )
 from enum import Enum
 from io import BytesIO
@@ -18,7 +20,7 @@ from devgoldyutils import short_str
 
 from .anime import Anime
 from .character import Character
-from .errors import AnimeNotFound, RestrictedSearch
+from .errors import AnimeNotFound
 
 class SearchTypes(Enum):
     ANIME = 0
@@ -35,16 +37,17 @@ class MALCord(GoldyBot.Extension):
         # as an attempt to save spamming the jikan API. As top anime results very rarely change we hold this cache for an entire day.
 
         self.__top_results_cache = { # Index 0 = timestamp cache expires, Index 1 = Cached data.
-            0: (0, {}),
-            1: (0, {})
+            0: (0, None),
+            1: (0, None)
         }
 
         self.anmoku = anmoku.AsyncAnmoku(
-            aiohttp_session = self.goldy.http_client._session
+            debug = True if goldy_bot_logger.level == 10 else False, 
+            session = self.goldy.http_client._session
         )
 
     async def dynamic_anime_query(self, typing_value: str, search_type: int = 0, **_) -> List[SlashOptionChoice]:
-        search_results: Dict[str, Any] = None
+        search_results = None
 
         search_type: SearchTypes = SearchTypes(search_type)
 
@@ -63,35 +66,22 @@ class MALCord(GoldyBot.Extension):
         else:
             search_results = await self.__search(typing_value, search_type)
 
-        status = search_results.get("status")
-
-        if status == 500:
-            return [SlashOptionChoice(f"Search Failed: API Error ({status})", str(None))]
-
-        search_result_list: List[Dict[str, Any]] = search_results["data"]
-
         choices = []
 
-        for search_result in search_result_list:
-            name = None
+        for result in search_results:
+            name = str(result.name)
 
-            if search_type == SearchTypes.ANIME:
-                name = search_result["title"]
+            if isinstance(result, anmoku.Character):
 
-            elif search_type == SearchTypes.CHARACTERS:
+                if not result.nicknames == []:
+                    name += f" ~ {result.nicknames[0]}"
 
-                character = Character(search_result)
-                name = character.name
-
-                if not character.nicknames == []:
-                    name += f" ~ {character.nicknames[0]}"
-
-                elif character.about is not None:
-                    text = character.about.replace("\n", " ")
+                elif result.about is not None:
+                    text = result.about.replace("\n", " ")
                     name += f' ~ "{short_str(text, 50)}"'
 
             choices.append(
-                SlashOptionChoice(name, str(search_result["mal_id"]))
+                SlashOptionChoice(name, str(result.id))
             )
 
         return choices
@@ -121,14 +111,11 @@ class MALCord(GoldyBot.Extension):
 
         if query.isdigit(): # Essentially searching by id. (slash options return anime id as their value instead the title)
             search_id = query
-        elif query == "None":
-            raise RestrictedSearch("uhhh that option is just to notify you that an api error occurred...", platter, self.logger)
         else:
-            jikan_response = await self.jikan.search(query, page = 1)
-            search_result = self.__get_results(jikan_response, search_type)
+            search_result = await self.__search(query, search_type = SearchTypes(search_type))
 
             try:
-                search_id = search_result["data"][0]["mal_id"]
+                search_id = list(search_result)[0].id
             except IndexError:
                 raise AnimeNotFound(platter, query, search_type, self.logger)
 
@@ -323,9 +310,11 @@ class MALCord(GoldyBot.Extension):
         elif status == "Finished Airing":
             return "🟢"
 
-    async def __search(self, query: str, search_type: SearchTypes):
-        return await self.anmoku.search(
+    async def __search(self, query: str, search_type: SearchTypes) -> SearchResult[anmoku.Anime | anmoku.Character]:
+        search_result = await self.anmoku.search(
             anmoku.Anime if search_type.value == 0 else anmoku.Character, query
         )
+
+        return search_result
 
 load = lambda: MALCord()
