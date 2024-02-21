@@ -311,6 +311,7 @@ class MALCord(GoldyBot.Extension):
             return "🟢"
 
     async def __search(self, query: str, search_type: SearchTypes) -> SearchResult[anmoku.Anime | anmoku.Character]:
+        # TODO: Added top anime to anmoku and return that when query is empty.
         search_result = await self.anmoku.search(
             anmoku.Anime if search_type.value == 0 else anmoku.Character, query
         )
